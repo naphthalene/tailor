@@ -4,7 +4,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from tailor.servent.models import Project
 
-@csrf_exempt    
+@csrf_exempt
 def fab(request, object_id):
     """
     Accepts JSON (and more later on?) data describing fabric commands
@@ -13,13 +13,13 @@ def fab(request, object_id):
     #Test it locally
     curl --dump-header - -H "Content-Type:application/json" -H "X_REQUESTED_WITH:XMLHttpRequest" -X POST --data '{"hosts": ["server1.example.com"],"commands": [{"command": "foo","params": []},{"command": "bar","params": []}], "api_key": "geM1hfBV6T4dDrAvzg7XxNM7BQAMCk3I"}' http://localhost:8000/tailor2/api/v1/fab/1
     """
-    
+
     if request.method == 'POST':
         try:
             _input = request.raw_post_data
             _input = simplejson.loads(request.raw_post_data)
             project = Project.objects.get(id=object_id)
-            return project.run_fab(_input)            
+            return project.run_fab(_input)
         except Exception, e: # TODO: Better exception handling
             print "Error: %s" % e
     else:
@@ -30,11 +30,11 @@ def fab(request, object_id):
 def projects(request, object_id=None):
     """
     Super, super simple projects api.
-    # TODO This is sloppy and has no security. 
+    # TODO This is sloppy and has no security.
     """
 
     if object_id:
-        project = Project.objects.get(id=object_id) 
+        project = Project.objects.get(id=object_id)
         instance = {
             "slug": project.slug,
             "tailor_key": project.tailor_key,
@@ -45,6 +45,6 @@ def projects(request, object_id=None):
         response = simplejson.dumps(instance)
     else:
         projects = Project.objects.values()
-        response = simplejson.dumps(list(projects))    
+        response = simplejson.dumps(list(projects))
 
     return HttpResponse(response, mimetype='application/json', status=200)

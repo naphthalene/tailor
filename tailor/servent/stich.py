@@ -1,7 +1,7 @@
 import sys
 import os
 import pickle
-    
+
 from fabric.api import execute as fab_exec
 from django.conf import settings
 from tailor.servent import defaults as tailor_defaults
@@ -18,11 +18,11 @@ class Sew:
 
     def setup(self):
         self.cleanup()
-        
+
         fabfile = open(self.fabfile_path, "w")
         new_string = ""
         new_string = new_string + "from fabric.api import *\nfrom tailor.client.decorators import *\n\n\nimport fabric\n\n\n"
-        
+
         new_string = new_string + '''fabric.state.output["status"] = True\nfabric.state.output["running"] = True\nfabric.state.output["user"] = True\nfabric.state.output["warnings"] = True\nfabric.state.output["stderr"] = True\nfabric.state.output['stdout'] = True\nfabric.state.output['aborts'] = False\n\n'''
         fabfile.write(new_string)
         fabfile.close()
@@ -35,7 +35,7 @@ class Sew:
             else:
                 new_string = new_string + "env.%s = %s" % (_varname, _var) + "\n"
         new_string = new_string + "\n\n"
-        
+
         fabfile = open(self.fabfile_path, "a")
         fabfile.write(new_string)
         fabfile.close()
@@ -72,7 +72,7 @@ class Sew:
                 command_dict['command'] = exe_command
                 command_dict['response'] = mystdout.getvalue()
                 command_dict['response_html'] = string_to_html(command_dict['response'])
-                
+
                 command_response.append(command_dict)
             except AttributeError:
                 response_dict = {'command': exe_command, "repsonse": "The command %s could not be found by the tailor fabric execution model." % exe_command}
@@ -85,7 +85,7 @@ class Sew:
             os.remove(self.fabfile_path)
         except:
             pass
-            
+
         try:
             os.remove("%sc" % self.fabfile_path)
         except:

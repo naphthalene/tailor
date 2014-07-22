@@ -9,7 +9,7 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from django.conf import settings as djangosettings
 from django.views.decorators.csrf import csrf_exempt
-from django.utils import simplejson
+import json
 
 from fabric.api import *
 
@@ -24,24 +24,30 @@ def schema(request):
 
     if request.REQUEST.get('key'):
         if request.REQUEST.get('key') in djangosettings.TAILOR_API_KEYS.values():
-            fabfile_directory = os.path.dirname(djangosettings.TAILOR_FABFILE_PATH)
-
+            fabfile = djangosettings.TAILOR_FABFILE_PATH
+            fabric_dir = os.path.dirname(fabfile)
             # Custom importer
-            importer = lambda _: imp.load_source('fabfile', os.path.join())
+            importer = lambda _: imp.load_source('fabfile', fabfile)
 
-            sys.path.insert(0, fabfile_directory)
-            os.chdir(fabfile_directory)
-            _, task_map, _ = load_fabfile('/fabfile.py',
-                                          importer)
+            sys.path.insert(0, fabric_dir)
+            os.chdir(fabric_dir)
+            try:
+                _, task_map, _ = load_fabfile('/fabfile.py', importer)
 
-            task_list = _task_names(task_map)
+                task_list = _task_names(task_map)
 
-            fab_dict['tasks'] {
-                'map'    : task_map,
-                'folded' : task_list
-
-            response = simplejson.dumps(fab_dict)
-            return HttpResponse(response, mimetype='application/json', status=200)
+                fab_dict = {
+                    'tasks' : {
+                        'map'    : task_map,
+                        'folded' : task_list
+                    }
+                }
+                del sys.path[0]
+                response = json.dumps(fab_dict)
+                return HttpResponse(response, mimetype='application/json', status=200)
+            except:
+                return HttpResponse("Failed to build schema", status=500)
+            finally:
 
         else:
             return HttpResponse("API Key Not Recognized", status=403)

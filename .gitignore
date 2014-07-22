@@ -1,3 +1,6 @@
 *.pyc
 dist/
 tailor.egg-info
+.idea
+.DS_Store
+

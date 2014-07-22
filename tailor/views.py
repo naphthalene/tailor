@@ -27,7 +27,7 @@ def schema(request):
 
             # TODO: Handle for ImportErrors and dynamically find and load
             # any modules the fabfile requires
-            
+
             # Load the fabfile and add its dir to sys.path
             fabfile_directory = os.path.dirname(djangosettings.TAILOR_FABFILE_PATH)
             sys.path.append(fabfile_directory)
@@ -35,9 +35,9 @@ def schema(request):
                 fabfile = imp.load_source('fabfile', djangosettings.TAILOR_FABFILE_PATH)
             except ImportError, e:
                 print e
-    
+
             # Complile list properties to be included in api
-            fab_props = dir(fabfile)            
+            fab_props = dir(fabfile)
             include_list = ['env']
             good_props = []
             for p in fab_props:
@@ -62,8 +62,8 @@ def schema(request):
                 # Else just use the value
                 else:
                     fab_dict[prop] = eval('fabfile.%s' % prop)
-    
-            response = simplejson.dumps(fab_dict)    
+
+            response = simplejson.dumps(fab_dict)
             return HttpResponse(response, mimetype='application/json', status=200)
 
         else:
@@ -81,8 +81,8 @@ def parse_function(prop, fabfile):
     task = {}
     _callable = eval('fabfile.%s' % prop)
     callable_source = inspect.getsource(_callable)
-    
-    
+
+
     task['name'] = prop
     task['task'] = (pickle.dumps(callable_source))
     task['docstring'] = _callable.__doc__
@@ -115,7 +115,7 @@ def parse_function(prop, fabfile):
 
     return task
 
-@csrf_exempt    
+@csrf_exempt
 def fab(request):
     '''
     Accepts JSON (and more later on?) data describing fabric commands
@@ -127,15 +127,15 @@ def fab(request):
     # NOTE: This is all PoC at this point.  Lots of hard-coded values
     # TODO: Seperate all this out to methods
     '''
-    
+
     import fabric
 
     # Turn off output as to not write against stdout and stderr
-    
+
 
     if request.method == 'POST':
         print request.raw_post_data
-        
+
         try:
             _input = request.raw_post_data
             _input = simplejson.loads(request.raw_post_data)
@@ -143,14 +143,14 @@ def fab(request):
             schema_url = _input['schema_url']
         except Exception, e:
             print "Error: %s" % e
-                
+
         try:
             client_url = "%s?key=%s" % (schema_url, api_key)
             client_data = urllib2.urlopen(client_url)
             client_json = client_data.read()
             client_dict = simplejson.loads(client_json)
             env.hosts = _input['hosts']
-            
+
             sewing = Sew()
             sewing.setup()
             sewing.add_vars(client_dict['env'])
@@ -158,7 +158,7 @@ def fab(request):
             sewing.add_methods(client_dict['tasks'])
             result, response_list = sewing.execute(_input['commands'])
             sewing.cleanup()
-            if result:    
+            if result:
                 response_dict = {'success':True, 'message':"Commands Executed", 'responses': response_list}
                 print response_dict
                 #from django.core import serializers
@@ -178,7 +178,3 @@ def fab(request):
     else:
         response = "Method is not allow. Only POST is allowed"
         return HttpResponse(response, status=400)
-
-
-
-    
